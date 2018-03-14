@@ -2,14 +2,18 @@ package ru.liga.songtask.analiz;
 
 import ru.liga.songtask.content.Content;
 import ru.liga.songtask.domain.Note;
+import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.domain.SimpleMidiFile;
-
+import java.io.File;
 import java.util.*;
 
 public class MyClass {
-
     private  SimpleMidiFile smf;
     private  List<Note> noteList;
+    public MyClass(String str){
+        smf=new SimpleMidiFile(new File("C:\\Users\\123\\Documents\\JavaLige\\day_4\\dz_2\\liga-internship\\zombie.txt"));
+        noteList=smf.vocalNoteList();
+    }
     public MyClass(){
          smf=new SimpleMidiFile(Content.ZOMBIE);
          noteList=smf.vocalNoteList();
@@ -52,8 +56,8 @@ public class MyClass {
         return  noteTime;
     }
 
-    public  Map<String,Integer> noteDiapozon(){//анализ диапозонов
-        Map<String ,Integer> noteDiapozon=new LinkedHashMap<>();
+    public  Map<String,String> noteDiapozon(){//анализ диапозонов
+        Map<String ,String> noteDiapozon=new LinkedHashMap<>();
         Note a,hi_note=noteList.get(0),lo_note=noteList.get(0);
 
         for(int i=0;i<noteList.size();i++){
@@ -63,9 +67,9 @@ public class MyClass {
             else if (a.sign().lower(lo_note.sign()))
                 lo_note=a;
         }
-        noteDiapozon.put("верхняя: "+ hi_note.sign().getNoteName(),hi_note.sign().getMidi());
-        noteDiapozon.put("нижняя: " + lo_note.sign().getNoteName(),lo_note.sign().getMidi());
-        noteDiapozon.put("диапозон: ",hi_note.sign().getMidi()-lo_note.sign().getMidi());
+        noteDiapozon.put("верхняя: "+ hi_note.sign().getNoteName()+" октава "+Integer.toString((hi_note.sign().getOctave())),Integer.toString(hi_note.sign().getMidi()));
+        noteDiapozon.put("нижняя: " + lo_note.sign().getNoteName()+" октава "+Integer.toString((lo_note.sign().getOctave())),Integer.toString(lo_note.sign().getMidi()));
+        noteDiapozon.put("диапозон: ",Integer.toString(hi_note.sign().getMidi()-lo_note.sign().getMidi()));
         return  noteDiapozon;
     }
 
@@ -73,7 +77,8 @@ public class MyClass {
         Map<Integer,String> noteHigh=new TreeMap<>();
 
         for(int i=0;i<noteList.size();i++){
-            noteHigh.put(noteList.get(i).sign().getMidi(),noteList.get(i).sign().getNoteName());
+            NoteSign a=noteList.get(i).sign();
+            noteHigh.put(a.getMidi(),a.getNoteName()+" октава "+Integer.toString((a.getOctave())));
         }
         return  noteHigh;
     }

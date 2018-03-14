@@ -1,10 +1,17 @@
 package ru.liga;
 
+import ru.liga.songtask.analiz.Change;
 import ru.liga.songtask.analiz.MyClass;
+import ru.liga.songtask.analiz.Output;
+import ru.liga.songtask.analiz.WriteToFile;
 import ru.liga.songtask.content.Content;
 import ru.liga.songtask.domain.SimpleMidiFile;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
+import java.io.*;
+
+import static ru.liga.songtask.analiz.Output.*;
 
 /**
  * Всего нот: 15
@@ -31,46 +38,37 @@ import java.util.*;
  * 11: 2
  */
 public class App {
+
+    public static Logger logger = LoggerFactory.getLogger(App.class);
     public static void main(String[] args) {
-        SimpleMidiFile simpleMidiFile = new SimpleMidiFile(Content.ZOMBIE);
-        System.out.println("Количество нот: " + simpleMidiFile.vocalNoteList().size());
-        System.out.println("Длительность (сек): " + simpleMidiFile.durationMs() / 1000);
-        MyClass mc=new MyClass();
-
-        System.out.println("Анализ диапазона:");
-        Map<String,Integer> nd = mc.noteDiapozon();
-        Object[] keys= nd.keySet().toArray();
-        Object [] val=nd.values().toArray();
-        for(int i=0;i<keys.length-1;i++)
-        System.out.println(keys[i]);
-        System.out.print(keys[keys.length-1]);System.out.println(val[val.length-1]);
-
-        System.out.println("Анализ длительности нот (мс):");
-        Map<Long,Integer> nt=mc.noteTime();
-        Set<Map.Entry<Long,Integer>> set=nt.entrySet();
-        Iterator<Map.Entry<Long,Integer>> iter= set.iterator();
-        while(iter.hasNext()==true){
-           Map.Entry<Long,Integer> ent=iter.next();
-           System.out.println(ent.getKey()+": "+ent.getValue());
+        File file = new File("C:\\Users\\123\\Documents\\JavaLige\\day_4\\dz_2\\liga-internship\\zombie.txt");
+        SimpleMidiFile simpleMidiFile = new SimpleMidiFile(file);
+        MyClass mc = new MyClass("");
+        WriteToFile fou = new WriteToFile("C:\\Users\\123\\Documents\\JavaLige\\day_4\\dz_2\\liga-internship\\out.txt");
+        if (args.length == 3 && args[2].compareTo("-f") == 0) {
+            fou.write("Количество нот: ");
+            fou.write(simpleMidiFile.vocalNoteList().size());
+            fou.write(System.lineSeparator());
+            fou.write("Длительность (сек): ");
+            fou.write(Long.toString(simpleMidiFile.durationMs() / 1000));
+            fou.write(System.lineSeparator());
+            diap(fou, mc);
+            time(fou, mc);
+            high(fou, mc);
+            interval(fou, mc);
+            fou.close();
+        } else if (args.length == 2 && args[1].compareTo("analize") == 0) {
+            diap(logger, mc);
+            time(logger, mc);
+            high(logger, mc);
+            interval(logger, mc);
+        } else if (args.length == 6) {
+            Integer trans = Integer.parseInt(args[3]);
+            Integer temp = Integer.parseInt(args[5]);
+            Change ch = new Change(trans, temp);
+            String path = "C:\\Users\\123\\Documents\\JavaLige\\day_4\\dz_2\\liga-internship\\" + "zombie" + args[2].trim() + args[3].trim() + args[4].trim() + args[5].trim() + ".txt";
+            ch.change_midi(path);
         }
-
-        System.out.println("Анализ нот по высоте:");
-        Map<Integer,String> nh= mc.noteHigh();
-        Set<Map.Entry<Integer,String>> set1=nh.entrySet();
-        Iterator<Map.Entry<Integer,String>> iter1= set1.iterator();
-        while(iter1.hasNext()==true){
-            Map.Entry<Integer,String> ent1=iter1.next();
-            System.out.println(ent1.getValue()+": "+ent1.getKey());
-        }
-
-        System.out.println("Анализ интервалов:");
-        Map<Integer,Integer> ni= mc.noteInterval();
-        Set<Map.Entry<Integer,Integer>> set2=ni.entrySet();
-        Iterator<Map.Entry<Integer,Integer>> iter2= set2.iterator();
-        while(iter2.hasNext()==true){
-            Map.Entry<Integer,Integer> ent2=iter2.next();
-            System.out.println(ent2.getKey()+": "+ent2.getValue());
-        }
-        System.out.println(mc.noteInterval());
     }
 }
+
