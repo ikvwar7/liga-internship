@@ -1,33 +1,44 @@
 package ru.liga.songtask.analiz;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileWriter;
 import java.io.IOException;
 
 public class WriteToFile {
     private FileWriter file;
-    public void close(){
+    private static Logger logger = LoggerFactory.getLogger(FileWriter.class);
+
+    public void close() {
         try {
             file.close();
-        }
-        catch (IOException e){System.out.println(e.getMessage());}
-    }
-    public WriteToFile(String str){
-        try{
-            file =new FileWriter(str);}
-        catch (IOException e)
-        {
-            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            logger.error("Ошибка " + e.getMessage());
         }
     }
-    public void  write(String str){
-        try{
+
+    public WriteToFile(String str) {
+        try {
+            file = new FileWriter(str);
+        } catch (IOException e) {
+            logger.error("Ошибка " + e.getMessage());
+        }
+    }
+
+    public void write(String str) {
+        try {
             file.write(str);
+        } catch (IOException e) {
+            logger.error("Ошибка: " + e.getMessage());
         }
-        catch (IOException e){}
     }
-    public void write (Integer str){
-        try{
+
+    public void write(Integer str) {
+        try {
             file.write(Integer.toString(str));
+        } catch (IOException e) {
+            logger.error("Ошибка " + e.getMessage());
         }
-        catch (IOException e){}
     }
 }
