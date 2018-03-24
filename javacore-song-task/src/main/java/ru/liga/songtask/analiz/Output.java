@@ -2,6 +2,8 @@ package ru.liga.songtask.analiz;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.liga.songtask.ArgumentParser.ArgumentParser;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +33,7 @@ public class Output {
 
     public static void noteTime(MidiAnaliz mc) {
         logger.info("Анализ длительности нот (мс):");
+        //Map<Long, Integer> nt = mc.noteTime();
         Map<Long, Integer> nt = mc.noteTime();
         Set<Map.Entry<Long, Integer>> set = nt.entrySet();
         nt.forEach((key, value) -> logger.info(key + ": " + value));

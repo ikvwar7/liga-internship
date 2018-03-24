@@ -1,12 +1,19 @@
 package ru.liga.songtask.analiz;
 
+
+import com.sun.java.swing.plaf.windows.WindowsTreeUI;
+import javafx.util.Pair;
 import ru.liga.songtask.content.Content;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.domain.SimpleMidiFile;
-
+//import java.util.function.Function;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.Map.Entry.comparingByValue;
 
 public class MidiAnaliz {
     private final SimpleMidiFile smf;
@@ -34,46 +41,53 @@ public class MidiAnaliz {
 
     public Map<Integer, Integer> noteInterval() {//анализ интервалов
         Map<Integer, Integer> noteInterval = new TreeMap<Integer, Integer>();
-
-        for (int i = 0; i < noteList.size() - 1; i++) {
-            int a = noteList.get(i).sign().getMidi();
-            int v = noteList.get(i + 1).sign().getMidi();
-            int interval = Math.abs(a - v);
-            if (noteInterval.containsKey(interval)) {
-                int count = noteInterval.get(interval);
-                noteInterval.replace(interval, count + 1);
-            } else noteInterval.put(interval, 0);
-        }
+        final NoteSign[] prev = new NoteSign[1];
+        noteList.stream()
+                .map(Note::sign)
+                .filter(note -> {
+                            if (prev[0] == null) {
+                                prev[0] = note;
+                                return false;
+                            }
+                            return true;
+                        }
+                )
+                .map(note -> {
+                    int count = 0;
+                    int interval = Math.abs(note.getMidi() - prev[0].getMidi());
+                    if (noteInterval.containsKey(interval)) {
+                        count = noteInterval.get(interval);
+                    }
+                    prev[0] = note;
+                    return new Pair<>(interval, ++count);
+                })
+                .forEach(keyValue -> noteInterval.put(keyValue.getKey(), keyValue.getValue()));
         return noteInterval;
     }
 
-    public Map<Long, Integer> noteTime() {//список длительностей нот с количеством вхождений
-        Map<Long, Integer> noteTime = new TreeMap<>();
+    public Map<Long, Integer> noteTime() {//map длительностей нот с количеством вхождений
 
-        for (int i = 0; i < noteList.size(); i++) {
-            Note a = noteList.get(i);
-            long dlit = (long) (a.durationTicks() * smf.tickInMs());
+        Map<Float, Long> res = noteList.stream()
+                .map(a -> a.durationTicks() * smf.tickInMs())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-            if (noteTime.containsKey(dlit)) {
-                int count = noteTime.get(dlit);
-                noteTime.replace(dlit, count + 1);
-            } else noteTime.put(dlit, 1);
-        }
-        return noteTime;
+        Map<Long, Integer> map = new TreeMap<>();
+        res.entrySet().stream()
+                .forEach(e -> map.put(e.getKey().longValue(), e.getValue().intValue()));
+        return map;
     }
 
     public Map<String, String> noteDiapozon() {//анализ диапозонов
         Map<String, String> noteDiapozon = new LinkedHashMap<>();
-        hi_note = noteList.get(0);
-        lo_note = noteList.get(0);
+        lo_note = noteList.stream().min((o1, o2) -> {
+            if (o1.sign().higher(o2.sign())) return 1;
+            else return -1;
+        }).get();
 
-        for (int i = 0; i < noteList.size(); i++) {
-            Note a = noteList.get(i);
-            if (a.sign().higher(hi_note.sign()))
-                hi_note = a;
-            else if (a.sign().lower(lo_note.sign()))
-                lo_note = a;
-        }
+        hi_note = noteList.stream().max((o1, o2) -> {
+            if (o1.sign().higher(o2.sign())) return 1;
+            else return -1;
+        }).get();
         noteDiapozon.put("верхняя: " + hi_note.sign().getNoteName() + " октава " + Integer.toString((hi_note.sign().getOctave())), Integer.toString(hi_note.sign().getMidi()));
         noteDiapozon.put("нижняя: " + lo_note.sign().getNoteName() + " октава " + Integer.toString((lo_note.sign().getOctave())), Integer.toString(lo_note.sign().getMidi()));
         diapozon = hi_note.sign().getMidi() - lo_note.sign().getMidi();
@@ -82,13 +96,10 @@ public class MidiAnaliz {
     }
 
     public Map<Integer, String> noteHigh() {//анализ нот по высоте
-        Map<Integer, String> noteHigh = new TreeMap<>();
-
-        for (int i = 0; i < noteList.size(); i++) {
-            NoteSign a = noteList.get(i).sign();
-            noteHigh.put(a.getMidi(), a.getNoteName() + " октава " + Integer.toString((a.getOctave())));
-        }
-        return noteHigh;
+        Map<Integer, String> map = noteList.stream()
+                .map(Note::sign)
+                .collect(Collectors.toMap(a -> a.getMidi(), a -> a.fullName() + " октава " + Integer.toString((a.getOctave())), (a, b) -> a, TreeMap::new));
+        return map;
     }
 
     public int getKol() {
